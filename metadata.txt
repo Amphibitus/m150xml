@@ -1,0 +1,66 @@
+# This file contains metadata for your plugin.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=DWA_M150_XML_Import
+qgisMinimumVersion=3.0
+description=Import Lines and Points (Manholes and sewers) from  DWA M150 XML and now ISYBAU XML >2006
+version=2.3.2
+author=gerd 3er geoplaning GmbH
+email=kontakt@geoplaning.de
+
+
+about=Import Lines and Points (Wastewater Manholes and sewers ) from DWA XML M150  and ISYBAU XML 
+ <p>
+ Ziel des Plugins ist die Uebernahme von Daten aus den einheitlichen Datenschnittstelle <br>
+ DWA XML M150 (incl. Zustand), und ISYBAU XML (derzeit nur Bestand) von Entwaesserungssystemen <br>
+ </p>
+ <p>
+ <br>
+    - alle vorhandenen Attribute werden ohne Pruefung in die entsprechenden Felder eingelesen<br>
+    - Formatfestlegungen der Attribute werden beruecksichtigt Listen sind nicht hinterlegt, <br>
+    - koennen aber durch Verknuepfung einer Werteliste beruecksichtigt werden<br>
+    - Knickpunkte in Leitungen oder Haltungen werden derzeit noch nicht beruecksichtigt. <br>
+    - Es findet keinerlei Plausibilitaetspruefung statt.<br> <br> 
+    Ueber Rueckmeldungen werde ich mich sehr freuen.<br> 
+    Viel Erfolg Gerd Dreier<br><br><br><br>
+    If this plugin is useful for you, please consider to make a donation of any value to the Maintainer</p>
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L6CGBSXGQNCLS&source=url" target="_blank">
+    <img border="0" alt="Donate" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif">
+    </a> 
+
+
+tracker=https://github.com/Amphibitus/m150xml/issues
+repository=hhttps://github.com/Amphibitus/m150xml
+# End of mandatory metadata
+
+# Recommended items:
+
+hasProcessingProvider=no
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=DWA, analysis, import, XML, M150, Haltung, Schacht, Zustand, ISYBAU
+
+homepage=https://github.com/Amphibitus/m150xml
+
+icon=icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
+# Since QGIS 3.8, a comma separated list of plugins to be installed
+# (or upgraded) can be specified.
+# Check the documentation for more information.
+# plugin_dependencies=
+
+Category of the plugin: Raster, Vector, Database or Web
+category= Vector
+
+# If the plugin can run on QGIS Server.
+server=False
+
