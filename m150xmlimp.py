@@ -66,58 +66,91 @@ def xmlListezuordnen(xmlAbschnitt : et.Element, SuchListe, ZielListe,NS=None):
         ZielListe.update([(SuchListe[i+1] ,wert)])
 
 def xmlAbschnitt_XY_lesen(p,Liste): 
-    go = p.findall('GO/GP')
+  
+    goa = p.findall('GO')
+    
     pkt=0
     x=0
     y=0
     z=0
+    geom=''
+    for go in goa: 
+        ap = go.findtext('GO002','')
+        typ = go.findtext('GO003','')
+        gpa = go.findall('GP')
 
-    for gp in go :
+        for gp in gpa :
 
-        cs = gp.findtext('GP005','')
-        if not cs.strip()=='':
-            x = float_de(cs)
-        else:
-            cs = gp.findtext('GP003','')
+            cs = gp.findtext('GP005','')
             if not cs.strip()=='':
                 x = float_de(cs)
-            else :
-                x = 0.0
+            else:
+                cs = gp.findtext('GP003','')
+                if not cs.strip()=='':
+                    x = float_de(cs)
+                else :
+                    x = 0.0
 
 
-        cs = gp.findtext('GP006','')
-        if not cs.strip()=='':
-            y = float_de(cs)
-            
-        else:
-            cs = gp.findtext('GP004','')
+            cs = gp.findtext('GP006','')
             if not cs.strip()=='':
                 y = float_de(cs)
-            else :
-                y = 0.0
+                
+            else:
+                cs = gp.findtext('GP004','')
+                if not cs.strip()=='':
+                    y = float_de(cs)
+                else :
+                    y = 0.0
 
-        cs = gp.findtext('GP007','')
-        if not cs.strip()=='':
-            z = float_de(cs)
-        else:
-            z = 0.0
+            cs = gp.findtext('GP007','')
+            if not cs.strip()=='':
+                z = float_de(cs)
+            else:
+                z = 0.0
+
+            g1= gp.findtext('GP101','')
+            g2 = gp.findtext('GP102','')
+
+            geom += str(x)+' '+str(y)+' '+str(z)+','  #+ap+' ' +typ+ + '\n'
+
+            # bei Haltungen
+            if ap in('H') and pkt==0:
+                Liste.update(X1=x)
+                Liste.update(Y1=y)
+                Liste.update(Z1=z)
+            elif ap in('H') and pkt>0:
+                # letzten Punkt der Haltung    
+                Liste.update(X2=x)
+                Liste.update(Y2=y)
+                if z>0:
+                    Liste.update(Z2=z)
+
+            #bei Schächten
+            if ap in('D') : # Geometrieobjektkennung Deckel
+                Liste.update(X1=x)
+                Liste.update(Y1=y)
+                if z>0:
+                    Liste.update(Z1=z)
+            elif ap in('G','B'): # Gerinne und Bauwerksohle
+                Liste.update(X2=x)
+                Liste.update(Y2=y)
+                if z>0:
+                    Liste.update(Z2=z)
+                
 
 
-        if pkt==0:
-            Liste.update(X1=x)
-            Liste.update(Y1=y)
-            Liste.update(Z1=z)
-                     
-            z1=z
-        else:
+            pkt = pkt + 1
+    geom=geom[:-1]
+    Liste.update(Geometrie=geom)
+    
+def referenztabZuordnen(SuchId):
+    for i in range(0,len(Referenz_tabelle),2):
+       
+        if Referenz_tabelle[i]==SuchId:
+            return Referenz_tabelle[i+1]
 
-            Liste.update(X2=x)
-            Liste.update(Y2=y)
-            Liste.update(Z2=z)
-
-            z2=z  
-        pkt = pkt + 1
-
+    return ''
 
 class M150XmlException( Exception ):
 
@@ -176,7 +209,7 @@ class M150XmlImp (object):
         self._NS = NS
         self._Schacht_Felder = Schacht_Felder
         self._Haltung_Felder = Haltung_Felder
-
+        self._Referenz_Felder = Referenz_Felder
         self._version = version
         
         self._schaechte=[]
@@ -185,6 +218,7 @@ class M150XmlImp (object):
         self._stationen=[]
         self._inspektionenSchacht=[]
         self._stationenSchacht=[]
+        self._referenzen=[]
         self._setups=None
         self._parse()
 
@@ -209,6 +243,7 @@ class M150XmlImp (object):
         self._readStationen()
         self._readInspektionenSchacht()
         self._readStationenSchacht()
+        self._readReferenzen()
 
     def coordSys(self):
         return self._coordsys['name']
@@ -262,6 +297,9 @@ class M150XmlImp (object):
         for p in self._readStationenSchacht():
             yield p
 
+    def referenzen(self):
+        for p in self._readReferenzen():
+            yield p
 
 #http://www.dwa.de/rwservice/M150.zip
 #https://docs.python.org/2/library/xml.etree.elementtree.html
@@ -293,6 +331,18 @@ class M150XmlImp (object):
 
             xmlAbschnitt_XY_lesen(p,schacht)
 
+            # eigentliche Datenfelder wieder fuellen
+            schacht["Rechtswert Deckel"]=schacht['X1']
+            schacht['Hochwert Deckel']=schacht['Y1']
+            schacht['Hoehe Deckel']=schacht['Z1']
+
+            #und die Sohle zuordnen ist bei Schaechten getrennt
+            
+            schacht['Rechtswert Sohle']=schacht['X2']
+            schacht['Hochwert Sohle']=schacht['Y2']
+            schacht['Hoehe Sohle']=schacht['Z2']
+          
+
             yield schacht
             self._schaechte.append(schacht)
 
@@ -316,7 +366,7 @@ class M150XmlImp (object):
             schacht.update(X2=schacht['Rechtswert Sohle'])
             schacht.update(Y2=schacht['Hochwert Sohle'])
             schacht.update(Z2=schacht['Hoehe Sohle'])
-
+            schacht.update(Geometrie='') 
             
 
             yield schacht
@@ -348,7 +398,16 @@ class M150XmlImp (object):
             haltung.update(Z2=haltung['Hoehe Rohrsohle unten'])
 
             xmlAbschnitt_XY_lesen(p,haltung)
- 
+             # eigentliche Datenfelder wieder fuellen
+            haltung["Rechtswert Rohrsohle oben"]=haltung['X1']
+            haltung['Hochwert Rohrsohle oben']=haltung['Y1']
+            haltung['Hoehe Rohrsohle oben']=haltung['Z1']
+
+            haltung['Rechtswert Rohrsohle unten']=haltung['X2']
+            haltung['Hochwert Rohrsohle unten']=haltung['Y2']
+            haltung['Hoehe Rohrsohle unten']=haltung['Z2']
+
+
             yield haltung
             self._haltungen.append(haltung)
 
@@ -375,7 +434,7 @@ class M150XmlImp (object):
             haltung.update(X2=haltung['Rechtswert Rohrsohle unten'])
             haltung.update(Y2=haltung['Hochwert Rohrsohle unten'])
             haltung.update(Z2=haltung['Hoehe Rohrsohle unten'])
-             
+            haltung.update(Geometrie='') 
  
             yield haltung
             self._haltungen.append(haltung)            
@@ -589,4 +648,21 @@ class M150XmlImp (object):
                                        
                     yield stationSchacht
                     self._stationen.append(stationSchacht)        
-                       
+
+    def _readReferenzen(self):
+        ns = self._ns
+        
+        
+        referenzen = self._data.findall('RT')
+       
+        referenz={}
+        
+        for ref in referenzen:
+            
+            xmlListezuordnen(ref, Referenz_Felder, referenz)
+            referenz.update(referenz=referenztabZuordnen(referenz['referenztab'])) 
+            if referenz['bezeichnung'] =='':
+                   referenz.update(bezeichnung=referenz['langtext']) 
+
+            yield referenz
+            self._referenzen.append(referenz)                       

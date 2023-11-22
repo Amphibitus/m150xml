@@ -200,8 +200,7 @@ class m150xml:
         if self.first_start == True:
             self.first_start = False
             self.dlg = m150xmlDialog()
-            self.browsePathSetting="/plugins/M150XML/BrowsePath"
-            self._home = QSettings().value(self.browsePathSetting,'')
+            self._home = QSettings().value('/plugins/M150XML/BrowsePath','')
 
             #Signals
             self.dlg.uBrowseXmlFile.clicked.connect(self._browseXmlFile)
@@ -229,8 +228,8 @@ class m150xml:
         filename = unicode(self.dlg.uXmlFile.text())
         homedir = os.path.dirname(filename)
         settings = QSettings()
-        settings.setValue(self.browsePathSetting,homedir)
-
+        settings.setValue('/plugins/M150XML/BrowsePath',homedir)
+        
        
         if not filename:
             QMessageBox.information(self.dlg,"M150Xml error","You must specify a M150Xml file to import")
@@ -253,7 +252,8 @@ class m150xml:
                 self._createStationsLayer(data)
                 self._createInspektionsLayerSchacht(data)
                 self._createStationsLayerSchacht(data)
-
+            if self.dlg.uImportRef.isChecked():
+                self._createReferenzLayer(data)
 
         # except:
         #     raise
@@ -264,13 +264,15 @@ class m150xml:
     def _createSchachtLayer(self,data):
         name = "Schacht_M150"
         #uri="Point?"+"&".join(['field='+x for x in Schacht_Felder])
-        uri ="Point?encoding=utf-8&field=oid:integer&"
+        uri ="PointZ?encoding=utf-8&field=oid:integer&"
             
         for i in range(0,len(data._Schacht_Felder),3):
             uri += "field="+ str(data._Schacht_Felder[i+1]).replace(' ','_')  +':'+ data._Schacht_Felder[i+2]+'&' 
             
         uri += "field=Temp:string"
-
+        uri += "&field=Geometrie:text(-1)"
+        uri += "&field=foto_1:string"
+        uri += "&field=foto_2:string"
 
         #epsg = data.coordSysEpsgId()
         #if epsg:
@@ -300,11 +302,12 @@ class m150xml:
                     feat.setAttribute(str(data._Schacht_Felder[i+1]).replace(' ','_'),content)
 
             # Koordinaten hinzufuegen'
-            x=schacht['X1']+self.xOffset
+            x=schacht['X1']
             y=schacht['Y1']
             z=schacht['Z1']
             pt_z= QgsPoint(x,y,z).asWkt()
             feat.setGeometry(QgsGeometry.fromWkt(pt_z))
+            feat.setAttribute("Geometrie",schacht["Geometrie"])
             
             
 
@@ -319,8 +322,17 @@ class m150xml:
         if lfdnr>0:
             vl.updateExtents()
             vl.commitChanges()
-            ret = QgsProject.instance().addMapLayer(vl)
-            
+
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Entwaesserung"): # We assume the group exists
+                myGroup1 = root.addGroup("Entwaesserung")
+
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Entwaesserung")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
             sldfilename = os.path.normpath(locale_path +'\\Schacht_M150.qml')
 
@@ -341,13 +353,13 @@ class m150xml:
     def _createHaltungsLayer(self,data):
         name = "Haltung_M150"
         
-        uri ="LineString?encoding=utf-8&field=oid:integer&"
+        uri ="LineStringZ?encoding=utf-8&field=oid:integer&"
             
         for i in range(0,len(data._Haltung_Felder),3):
             uri += "field="+ str(data._Haltung_Felder[i+1]).replace(' ','_')  +':'+ data._Haltung_Felder[i+2]+'&' 
             
         uri += "field=Temp:string"
-
+        uri += "&field=Geometrie:text"
 
 
         #epsg = data.coordSysEpsgId()
@@ -378,15 +390,22 @@ class m150xml:
                     feat.setAttribute(str(data._Haltung_Felder[i+1]).replace(' ','_'),content)
 
             # Koordinaten hinzufuegen'
-            x1=haltung['X1']+self.xOffset
+            x1=haltung['X1']
             y1=haltung['Y1']
             z1=haltung['Z1']
-            x2=haltung['X2']+self.xOffset
+            x2=haltung['X2']
             y2=haltung['Y2']
             z2=haltung['Z2']
 
-            feat.setGeometry(QgsGeometry.fromPolyline( [QgsPoint(x1,y1,z1),QgsPoint(x2,y2,z2)]))
-        
+            if len(haltung["Geometrie"])>0:
+                #  geom_from_wkt('LINESTRINGZ('||"Geometrie"||')') # Felder in QGIS aktualisieren
+                feat.setGeometry(QgsGeometry.fromWkt('LINESTRINGZ('+(haltung["Geometrie"]+')')))
+            else:
+                feat.setGeometry(QgsGeometry.fromPolyline( [QgsPoint(x1,y1,z1),QgsPoint(x2,y2,z2)]))
+
+
+            feat.setAttribute("Geometrie",haltung["Geometrie"])
+
             try:
                 pr.addFeatures([feat])
             except:
@@ -398,8 +417,16 @@ class m150xml:
         if lfdnr>0:
             vl.updateExtents()
             vl.commitChanges()
-            ret = QgsProject.instance().addMapLayer(vl)
-                    
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Entwaesserung"): # We assume the group exists
+                myGroup1 = root.addGroup("Entwaesserung")
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Entwaesserung")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+
+
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
             sldfilename = os.path.normpath(locale_path +'\\Haltung_M150.qml')
 
@@ -424,7 +451,7 @@ class m150xml:
             uri += "field="+ str(Inspektions_Felder[i+1]).replace(' ','_')  +':'+ Inspektions_Felder[i+2]+'&'         
 
         uri += "field=Temp:string"
-
+        uri += "&field=Geometrie:string"
 
 
         #epsg = data.coordSysEpsgId()
@@ -456,7 +483,7 @@ class m150xml:
 
 
             # Koordinaten hinzufuegen'
-            x=(inspektion['X1']+inspektion['X2'])/2+self.xOffset
+            x=(inspektion['X1']+inspektion['X2'])/2
             y=(inspektion['Y1']+inspektion['Y2'])/2
             
             feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
@@ -471,9 +498,15 @@ class m150xml:
         if lfdnr>0:
             vl.updateExtents()
             vl.commitChanges()
-            ret = QgsProject.instance().addMapLayer(vl)
-            
-            
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Zustand"): # We assume the group exists
+                myGroup1 = root.addGroup("Zustand")
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Zustand")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
             sldfilename = os.path.normpath(locale_path +'\\Inspektion_M150.qml')
 
@@ -499,7 +532,7 @@ class m150xml:
             uri += "field="+ str(Stations_Felder[i+1]).replace(' ','_')  +':'+ Stations_Felder[i+2]+'&'         
 
         uri += "field=Temp:string"
-
+        uri += "&field=Geometrie:string"
 
 
         #epsg = data.coordSysEpsgId()
@@ -533,7 +566,7 @@ class m150xml:
 
 
             # Koordinaten hinzufuegen'
-            x=station['X1']+self.xOffset
+            x=station['X1']
             y=station['Y1']
             
             feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
@@ -549,8 +582,15 @@ class m150xml:
         if lfdnr>0:
             vl.updateExtents()
             vl.commitChanges()
-            ret = QgsProject.instance().addMapLayer(vl)
-            
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Zustand"): # We assume the group exists
+                myGroup1 = root.addGroup("Zustand")
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Zustand")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+
             
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
             sldfilename = os.path.normpath(locale_path +'\\Station_M150.qml')
@@ -576,7 +616,7 @@ class m150xml:
             uri += "field="+ str(Inspektions_FelderSchacht[i+1]).replace(' ','_')  +':'+ Inspektions_FelderSchacht[i+2]+'&'         
 
         uri += "field=Temp:string"
-
+        uri += "&field=Geometrie:string"
 
 
         #epsg = data.coordSysEpsgId()
@@ -610,7 +650,7 @@ class m150xml:
 
 
             # Koordinaten hinzufuegen'
-            x=inspektionSchacht['X1']+self.xOffset
+            x=inspektionSchacht['X1']
             y=inspektionSchacht['Y1']
             
             feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
@@ -625,8 +665,15 @@ class m150xml:
         if lfdnr>0:
             vl.updateExtents()
             vl.commitChanges()
-            ret = QgsProject.instance().addMapLayer(vl)
-            
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Zustand"): # We assume the group exists
+                myGroup1 = root.addGroup("Zustand")
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Zustand")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+           
             
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
             sldfilename = os.path.normpath(locale_path +'\\Inspektion_M150Schacht.qml')
@@ -653,6 +700,7 @@ class m150xml:
             uri += "field="+ str(Stations_FelderSchacht[i+1]).replace(' ','_')  +':'+ Stations_FelderSchacht[i+2]+'&'         
 
         uri += "field=Temp:string"
+        uri += "&field=Geometrie:string"
 
 
 
@@ -686,11 +734,12 @@ class m150xml:
 
 
             # Koordinaten hinzufuegen'
-            x=stationSchacht['X1']+self.xOffset
+            x=stationSchacht['X1']
             y=stationSchacht['Y1']
             
             feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
             
+
             try:
                 pr.addFeatures([feat])
             except:
@@ -700,7 +749,15 @@ class m150xml:
         if lfdnr>0:
             vl.updateExtents()
             vl.commitChanges()
-            ret = QgsProject.instance().addMapLayer(vl)
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Zustand"): # We assume the group exists
+                myGroup1 = root.addGroup("Zustand")
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Zustand")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+
             
             
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
@@ -717,3 +774,79 @@ class m150xml:
             ret = vl.triggerRepaint()
 
 
+
+
+    def _createReferenzLayer(self,data):
+        name = "Referenzen"
+        #uri="Point?"+"&".join(['field='+x for x in Schacht_Felder])
+        uri ="NoGeometry?encoding=utf-8&field=oid:integer&"
+            
+        for i in range(0,len(data._Referenz_Felder),3):
+            uri += "field="+ str(data._Referenz_Felder[i+1]).replace(' ','_')  +':'+ data._Referenz_Felder[i+2]+'&' 
+            
+        uri += "field=Temp:string"
+
+
+
+        #epsg = data.coordSysEpsgId()
+        #if epsg:
+        #    uri += '&crs=epsg:'+unicode(epsg)
+
+        uri += '&crs=epsg:'+unicode('25832')
+        vl = QgsVectorLayer(uri,name,"memory")
+        # Need to do something about crs()
+        
+
+        vl.startEditing()
+        fields=vl.fields()
+        pr=vl.dataProvider()
+        lfdnr=0
+        for refdat in data.referenzen():
+        
+            feat = QgsFeature(fields)
+           
+
+            lfdnr+=1
+            feat['oid']=lfdnr
+
+            #Felder fuettern
+            for i in range(0,len(data._Referenz_Felder),3):
+                if refdat[data._Referenz_Felder[i+1]]:
+                    content = refdat[data._Referenz_Felder[i+1]]
+                    feat.setAttribute(str(data._Referenz_Felder[i+1]).replace(' ','_'),content)
+
+
+            try:
+                pr.addFeatures([feat])
+            except:
+                raise
+                gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+
+
+
+        if lfdnr>0:
+            vl.updateExtents()
+            vl.commitChanges()
+
+
+            root = QgsProject.instance().layerTreeRoot()
+            if not root.findGroup("Referenztabelle"): # We assume the group exists
+                myGroup1 = root.addGroup("Referenztabelle")
+
+
+            ret = QgsProject.instance().addMapLayer(vl,False)
+            g = root.findGroup("Referenztabelle")
+            g.insertChildNode(0, QgsLayerTreeLayer(vl))
+
+            locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
+            sldfilename = os.path.normpath(locale_path +'\\Referenztabelle.qml')
+
+            if os.path.exists(sldfilename):
+                # ret = vl.loadSldStyle(sldfilename)
+                ret = vl.loadNamedStyle(sldfilename)
+                if ret:
+                    QgsMessageLog.logMessage("Style loaded", 'M150xml', Qgis.Info)
+                else:
+                    QgsMessageLog.logMessage("Style NOT loaded", 'M150xml', Qgis.Info)
+
+            ret = vl.triggerRepaint()

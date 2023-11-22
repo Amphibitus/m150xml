@@ -11,7 +11,7 @@
   <Datenkollektive>
     <Datenstatus>1</Datenstatus>
     <Erstellungsdatum>2020-11-25</Erstellungsdatum>
-    <Kommentar>WerbetalAbwasserverband</Kommentar>
+    <Kommentar>Abwasserverband</Kommentar>
     <Kennungen>
       <Kollektiv>
         <Kennung>STA01</Kennung>
@@ -27,12 +27,12 @@
         </Kollektiveigenschaft>
         <Regelwerk>2</Regelwerk>
         <Bearbeitungsstand>2020-11-25</Bearbeitungsstand>
-        <Kommentar>Exportiert aus Projekt 'WerbetalAbwasserverband'</Kommentar>
+        <Kommentar>Exportiert aus Projekt 'Abwasserverband'</Kommentar>
       </Kollektiv>
     </Kennungen>
     <Stammdatenkollektiv>
       <Kennung>STA01</Kennung>
-      <Beschreibung>Exportiert aus Projekt 'WerbetalAbwasserverband'</Beschreibung>
+      <Beschreibung>Exportiert aus Projekt 'Abwasserverband'</Beschreibung>
       <AbwassertechnischeAnlage>
         <Objektbezeichnung>12</Objektbezeichnung>
         <Objektart>2</Objektart>

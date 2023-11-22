@@ -9,7 +9,11 @@ Import Lines and Points (Wastewater Manholes and sewers ) from DWA XML M150  and
     - Formatfestlegungen der Attribute werden beruecksichtigt Listen sind nicht hinterlegt, <br>
     - koennen aber durch Verknuepfung einer Werteliste beruecksichtigt werden<br>
     - Knickpunkte in Leitungen oder Haltungen werden derzeit noch nicht beruecksichtigt. <br>
-    - Es findet keinerlei Plausibilitaetspruefung statt.<br> <br> 
+    - Es findet keinerlei Plausibilitaetspruefung statt.<br> 
+    - Haltungen aus Polylinien können in QGIS mit dem Feldrechner aus dem Attribut "Geometrie" übernommen werden  <br> 
+      geometry = geom_from_wkt('LINESTRINGZ('||"Geometrie"||')')<br> 
+
+      
     Ueber Rueckmeldungen werde ich mich sehr freuen.<br> 
     Viel Erfolg Gerd Dreier<br><br><br><br>
     If this plugin is useful for you, please consider to make a donation of any value to the Maintainer</p>

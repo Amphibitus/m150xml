@@ -63,7 +63,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Elemente zum importieren:</string>
+        <string>Zu importieren:</string>
        </property>
        <property name="buddy">
         <cstring>uImportMarks</cstring>
@@ -100,6 +100,16 @@
        </property>
        <property name="checked">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="uImportRef">
+       <property name="text">
+        <string>Referenzen</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
