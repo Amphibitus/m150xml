@@ -6,12 +6,28 @@
 name=DWA_M150_XML_Import
 qgisMinimumVersion=3.20
 description=Import Lines and Points (Manholes and sewers) from  DWA M150 XML and now ISYBAU XML >2006
-version=2.3.9
-author=gerd 3er geoplaning GmbH
+version=2.4
+author=g3er geoplaning GmbH
 email=kontakt@geoplaning.de
 
 
-about=Import Lines and Points (Wastewater Manholes and sewers ) from DWA XML M150  and ISYBAU XML 
+about=    
+    - alle vorhandenen Attribute werden ohne Pruefung in die entsprechenden Felder eingelesen<br>
+    - Formatfestlegungen der Attribute werden beruecksichtigt und Referenzlisten werden übernommen, <br>
+    - und koennen durch Verknuepfung mit Werteverweis auf die Referenzliste beruecksichtigt werden<br>
+    - Knickpunkte in Leitungen oder Haltungen werden derzeit noch nicht beruecksichtigt. <br>
+    - Es findet keinerlei Plausibilitaetspruefung statt.<br> 
+    - Haltungen aus Polylinien können in QGIS mit dem Feldrechner aus dem Attribut "Geometrie" übernommen werden  <br> 
+      geometry = geom_from_wkt('LINESTRINGZ('||"Geometrie"||')')<br> 
+
+      
+    Ueber Rueckmeldungen werde ich mich sehr freuen.<br> 
+    Viel Erfolg Gerd Dreier<br><br><br><br>
+    If this plugin is useful for you, please consider to make a donation of any value to the Maintainer</p>
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L6CGBSXGQNCLS&source=url" target="_blank">
+    <img border="0" alt="Donate" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif">
+    </a> 
+
 
 tracker=https://github.com/Amphibitus/m150xml/issues
 repository=https://github.com/Amphibitus/m150xml
