@@ -38,13 +38,13 @@ def float_de(s):
     return a
 
 
-def xmlZahlzuordnen(xmlAbschnitt : et.Element,xmlFeld, Zielliste, Zielfeld):
+def xmlZahlzuordnen(self,xmlAbschnitt : et.Element,xmlFeld, Zielliste, Zielfeld):
     cs = xmlAbschnitt.findtext(xmlFeld,'')
     Zielliste[Zielfeld] = float_de(cs)
 
-def xmlListezuordnen(xmlAbschnitt : et.Element, SuchListe, ZielListe,NS=None):
+def xmlListezuordnen(self,xmlAbschnitt : et.Element, SuchListe, ZielListe):
     for i in range(0,len(SuchListe),3):
-        cs = xmlAbschnitt.findtext(SuchListe[i],'',NS)
+        cs = xmlAbschnitt.findtext(SuchListe[i],'',self._NS)
         cs = cs.strip('\n').strip()
         feldtyp =  SuchListe[i+2]
 
@@ -65,9 +65,9 @@ def xmlListezuordnen(xmlAbschnitt : et.Element, SuchListe, ZielListe,NS=None):
 
         ZielListe.update([(SuchListe[i+1] ,wert)])
 
-def xmlAbschnitt_XY_lesen(p,Liste): 
+def xmlAbschnitt_XY_lesen(self, p,Liste): 
   
-    goa = p.findall('GO')
+    goa = p.findall('GO',self._NS)
     
     pkt=0
     x=0
@@ -75,44 +75,44 @@ def xmlAbschnitt_XY_lesen(p,Liste):
     z=0
     geom=''
     for go in goa: 
-        ap = go.findtext('GO002','')
-        typ = go.findtext('GO003','')
-        gpa = go.findall('GP')
+        ap = go.findtext('GO002','',self._NS)
+        typ = go.findtext('GO003','',self._NS)
+        gpa = go.findall('GP',self._NS)
 
         for gp in gpa :
 
-            cs = gp.findtext('GP005','')
+            cs = gp.findtext('GP005','',self._NS)
             if not cs.strip()=='':
                 x = float_de(cs)
             else:
-                cs = gp.findtext('GP003','')
+                cs = gp.findtext('GP003','',self._NS)
                 if not cs.strip()=='':
                     x = float_de(cs)
                 else :
                     x = 0.0
 
 
-            cs = gp.findtext('GP006','')
+            cs = gp.findtext('GP006','',self._NS)
             if not cs.strip()=='':
                 y = float_de(cs)
                 
             else:
-                cs = gp.findtext('GP004','')
+                cs = gp.findtext('GP004','',self._NS)
                 if not cs.strip()=='':
                     y = float_de(cs)
                 else :
                     y = 0.0
 
-            cs = gp.findtext('GP007','')
+            cs = gp.findtext('GP007','',self._NS)
             if not cs.strip()=='':
                 z = float_de(cs)
             else:
                 z = 0.0
 
-            g1= gp.findtext('GP101','')
-            g2 = gp.findtext('GP102','')
+            g1= gp.findtext('GP101','',self._NS)
+            g2 = gp.findtext('GP102','',self._NS)
 
-            geom += str(x)+' '+str(y)+' '+str(z)+','  #+ap+' ' +typ+ + '\n'
+            geom += str(x)+' '+str(y)+' '+str(z)+',' 
 
             # bei Haltungen
             if ap in('H') and pkt==0:
@@ -143,6 +143,45 @@ def xmlAbschnitt_XY_lesen(p,Liste):
             pkt = pkt + 1
     geom=geom[:-1]
     Liste.update(Geometrie=geom)
+
+
+def xmlAbschnitt_XY_lesen_ISYBAU(self,p,Liste): 
+# funktioniert noch nicht  
+    pkt=0
+    x=0
+    y=0
+    z=0
+    geom=''
+    attribut=''
+    objektart=''
+    
+    objektart = p.findtext("d:Objektart", None, self._NS)
+
+    
+    gpa = p.findall(".//d:Rechtswert/../../*",self._NS)
+
+    for gp in gpa :
+
+        x =float_de(gp.findtext(".//d:Rechtswert",'0.0',self._NS))
+        y =float_de(gp.findtext(".//d:Hochwert",'0.0',self._NS))
+        z =float_de(gp.findtext(".//d:Punkthoehe",'0.0',self._NS))
+        attribut = gp.findtext(".//d:PunktattributAbwasser", None, self._NS)
+
+        geom += str(x)+' '+str(y)+' '+str(z)+',' 
+        pkt=pkt+1
+
+        if pkt==1:
+            Liste.update(X1=x)
+            Liste.update(Y1=y)
+            Liste.update(Z1=z)
+
+        Liste.update(X2=x)
+        Liste.update(Y2=y)
+        Liste.update(Z2=z)
+
+    
+    geom=geom[:-1]
+    Liste.update(Geometrie=geom)
     
 def referenztabZuordnen(SuchId):
     for i in range(0,len(Referenz_tabelle),2):
@@ -170,22 +209,22 @@ class M150XmlImp (object):
         data = et.ElementTree()
         data.parse(file)
         root = data.find(".")
-        ns = root.tag.split("}")[0]+"}"
+        nsroot = root.tag.split("}")[0]+"}"
 
         #Version pruefen
-        if ns.find('ofd-hannover')>=0 :
+        if nsroot.find('ofd-hannover')>=0 :
             version='ISYBAU'
             NS=NSISYBAU2006
             Schacht_Felder=Schacht_FelderISYBAU
             Haltung_Felder=Haltung_FelderISYBAU
 
-        elif ns.find('www.bfr-abwasser.de')>=0:
+        elif nsroot.find('www.bfr-abwasser.de')>=0:
             version='ISYBAU'
             NS=NSISYBAU2017
             Schacht_Felder=Schacht_FelderISYBAU
             Haltung_Felder=Haltung_FelderISYBAU            
 
-        elif ns.find('DATA')>=0: 
+        elif nsroot.find('DATA')>=0: 
             version='DWAM150'
             NS=None
             Schacht_Felder=Schacht_FelderDWA
@@ -204,8 +243,7 @@ class M150XmlImp (object):
         self._file = unicode(file)
         self._data = data
         self._root = root
-        self._ns = ns
-
+        self._nsroot = nsroot
         self._NS = NS
         self._Schacht_Felder = Schacht_Felder
         self._Haltung_Felder = Haltung_Felder
@@ -225,9 +263,9 @@ class M150XmlImp (object):
 
 
     def _readHeader(self):
-        ns = self._ns
+
         file = self._file
-        cs = self._data.find(ns+'CoordinateSystem')
+        cs = self._data.find(self._nsroot+'CoordinateSystem')
         if cs is not None:
             self._coordsys['name'] = cs.get('name')
             self._coordsys['description'] = cs.get('desc')
@@ -305,9 +343,8 @@ class M150XmlImp (object):
 #https://docs.python.org/2/library/xml.etree.elementtree.html
 
     def _readSchaechte(self):
-        ns = self._ns;
-        NS = self._NS
 
+   
         x=0
         y=0
         z=0
@@ -315,7 +352,7 @@ class M150XmlImp (object):
         for p in schaechte:
             schacht={}
 
-            xmlListezuordnen(p, self._Schacht_Felder, schacht,NS)
+            xmlListezuordnen(self,p, self._Schacht_Felder, schacht)
 
 
                         
@@ -329,7 +366,7 @@ class M150XmlImp (object):
             schacht.update(Y2=schacht['Hochwert Sohle'])
             schacht.update(Z2=schacht['Hoehe Sohle'])
 
-            xmlAbschnitt_XY_lesen(p,schacht)
+            xmlAbschnitt_XY_lesen(self,p,schacht)
 
             # eigentliche Datenfelder wieder fuellen
             schacht["Rechtswert Deckel"]=schacht['X1']
@@ -347,46 +384,60 @@ class M150XmlImp (object):
             self._schaechte.append(schacht)
 
     def _readSchaechteISYBAU(self):
-        ns = self._ns
-        NS = self._NS
-        Schacht_Felder=self._Schacht_Felder
-        
 
-        schaechte = self._data.findall("d:Datenkollektive/d:Stammdatenkollektiv/d:AbwassertechnischeAnlage/d:Knoten/d:Schacht/../..",NS)
+  
+        for KnotenTyp in {"Schacht","Bauwerk"}: #,"Anschlusspunkt"
+            schaechte = self._data.findall("d:Datenkollektive/d:Stammdatenkollektiv/d:AbwassertechnischeAnlage/d:Knoten/d:" + KnotenTyp + "/../..",self._NS)
+
+            for p in schaechte:
+                schacht={}
+
+                xmlListezuordnen(self,p, self._Schacht_Felder, schacht)
+                        
+             # falls keine Einzelpunkte definiert dan aus HG201 u. ff.
+
+                schacht.update(X1=schacht['Rechtswert Deckel'])
+                schacht.update(Y1=schacht['Hochwert Deckel'])
+                schacht.update(Z1=schacht['Hoehe Deckel'])
+
+                schacht.update(X2=schacht['Rechtswert Sohle'])
+                schacht.update(Y2=schacht['Hochwert Sohle'])
+                schacht.update(Z2=schacht['Hoehe Sohle']) 
+
+                xmlAbschnitt_XY_lesen_ISYBAU(self,p,schacht)
+
+                # eigentliche Datenfelder wieder fuellen
+                schacht["Rechtswert Deckel"]=schacht['X1']
+                schacht['Hochwert Deckel']=schacht['Y1']
+                schacht['Hoehe Deckel']=schacht['Z1']
+
+                #und die Sohle zuordnen ist bei Schaechten getrennt
                 
-        for p in schaechte:
-            schacht={}
+                schacht['Rechtswert Sohle']=schacht['X2']
+                schacht['Hochwert Sohle']=schacht['Y2']
+                schacht['Hoehe Sohle']=schacht['Z2']
 
-            xmlListezuordnen(p, self._Schacht_Felder, schacht,NS)
+                yield schacht
+                self._schaechte.append(schacht)
 
-            schacht.update(X1=schacht['Rechtswert Deckel'])
-            schacht.update(Y1=schacht['Hochwert Deckel'])
-            schacht.update(Z1=schacht['Hoehe Deckel'])
-
-            schacht.update(X2=schacht['Rechtswert Sohle'])
-            schacht.update(Y2=schacht['Hochwert Sohle'])
-            schacht.update(Z2=schacht['Hoehe Sohle'])
-            schacht.update(Geometrie='') 
+            #und die Sohle zuordnen ist bei Schaechten getrennt
             
-
-            yield schacht
-            self._schaechte.append(schacht)
-
+            schacht['Rechtswert Sohle']=schacht['X2']
+            schacht['Hochwert Sohle']=schacht['Y2']
+            schacht['Hoehe Sohle']=schacht['Z2']
+          
 
 
     def _readHaltungen(self):
-        ns = self._ns;
-        NS = self._NS
-        Haltung_Felder=self._Haltung_Felder
                
         haltungen = self._data.findall('HG')
         for p in haltungen:
             
             haltung={}
 
-            xmlListezuordnen(p, self._Haltung_Felder, haltung,NS)
+            xmlListezuordnen(self,p, self._Haltung_Felder, haltung)
 
-             # falls keine Einzelpunkte definiert dan aus HG201 u. ff.
+             # falls keine Einzelpunkte definiert dann aus HG201 u. ff.
 
             haltung.update(X1=haltung['Rechtswert Rohrsohle oben'])
             haltung.update(Y1=haltung['Hochwert Rohrsohle oben'])
@@ -397,7 +448,7 @@ class M150XmlImp (object):
             haltung.update(Y2=haltung['Hochwert Rohrsohle unten'])
             haltung.update(Z2=haltung['Hoehe Rohrsohle unten'])
 
-            xmlAbschnitt_XY_lesen(p,haltung)
+            xmlAbschnitt_XY_lesen(self,p,haltung)
              # eigentliche Datenfelder wieder fuellen
             haltung["Rechtswert Rohrsohle oben"]=haltung['X1']
             haltung['Hochwert Rohrsohle oben']=haltung['Y1']
@@ -414,17 +465,16 @@ class M150XmlImp (object):
 
 
     def _readHaltungenISYBAU(self):
-        ns = self._ns
-        NS = self._NS
-        Haltung_Felder=self._Haltung_Felder
+
         
-        haltungen =  self._data.findall("d:Datenkollektive/d:Stammdatenkollektiv/d:AbwassertechnischeAnlage/d:Kante/d:Haltung/../..",NS)
+        haltungen =  self._data.findall("d:Datenkollektive/d:Stammdatenkollektiv/d:AbwassertechnischeAnlage/[d:Objektart='1']/d:Kante/d:Haltung/../..",self._NS)
         for p in haltungen:
             
             haltung={}
 
-            xmlListezuordnen(p, self._Haltung_Felder, haltung,NS)
+            xmlListezuordnen(self,p, self._Haltung_Felder, haltung)
 
+             # falls keine Einzelpunkte definiert dann aus HG201 u. ff.
 
             haltung.update(X1=haltung['Rechtswert Rohrsohle oben'])
             haltung.update(Y1=haltung['Hochwert Rohrsohle oben'])
@@ -434,14 +484,26 @@ class M150XmlImp (object):
             haltung.update(X2=haltung['Rechtswert Rohrsohle unten'])
             haltung.update(Y2=haltung['Hochwert Rohrsohle unten'])
             haltung.update(Z2=haltung['Hoehe Rohrsohle unten'])
-            haltung.update(Geometrie='') 
- 
+
+            xmlAbschnitt_XY_lesen_ISYBAU(self,p,haltung)
+   
+             # eigentliche Datenfelder wieder fuellen
+            haltung["Rechtswert Rohrsohle oben"]=haltung['X1']
+            haltung['Hochwert Rohrsohle oben']=haltung['Y1']
+            haltung['Hoehe Rohrsohle oben']=haltung['Z1']
+
+            haltung['Rechtswert Rohrsohle unten']=haltung['X2']
+            haltung['Hochwert Rohrsohle unten']=haltung['Y2']
+            haltung['Hoehe Rohrsohle unten']=haltung['Z2']
+
+
             yield haltung
-            self._haltungen.append(haltung)            
+            self._haltungen.append(haltung)     
+
+
             
     def _readInspektionen(self):
-        ns = self._ns
-        
+
         
         haltungen = self._data.findall('HG')
        
@@ -450,20 +512,20 @@ class M150XmlImp (object):
             halnr = p.findtext('HG001','')+p.findtext('HG011','')
 
              # falls keine Einzelpunkte definiert dan aus HG201 u. ff.
-            xmlZahlzuordnen(p,'HG201', inspektion, "X1")
-            xmlZahlzuordnen(p,'HG202', inspektion, "Y1")
-            xmlZahlzuordnen(p,'HG204', inspektion, "Z1")
+            xmlZahlzuordnen(self,p,'HG201', inspektion, "X1")
+            xmlZahlzuordnen(self,p,'HG202', inspektion, "Y1")
+            xmlZahlzuordnen(self,p,'HG204', inspektion, "Z1")
 
-            xmlZahlzuordnen(p,'HG206', inspektion, "X2")
-            xmlZahlzuordnen(p,'HG207', inspektion, "Y2")
-            xmlZahlzuordnen(p,'HG209', inspektion, "Z2")
+            xmlZahlzuordnen(self,p,'HG206', inspektion, "X2")
+            xmlZahlzuordnen(self,p,'HG207', inspektion, "Y2")
+            xmlZahlzuordnen(self,p,'HG209', inspektion, "Z2")
 
-            xmlAbschnitt_XY_lesen(p,inspektion)
+            xmlAbschnitt_XY_lesen(self,p,inspektion)
 
             inspektionen = p.findall('HI')
             for ins in inspektionen:
                 
-                xmlListezuordnen(ins, Inspektions_Felder, inspektion)
+                xmlListezuordnen(self,ins, Inspektions_Felder, inspektion)
             
                 inspektion.update(ID=halnr) 
 
@@ -472,8 +534,6 @@ class M150XmlImp (object):
                 self._inspektionen.append(inspektion)
 
     def _readStationen(self):
-        ns = self._ns
-        
 
         inspnr=0
         
@@ -484,15 +544,15 @@ class M150XmlImp (object):
             halnr = p.findtext('HG001','')
 
              # falls keine Einzelpunkte definiert dan aus HG201 u. ff.
-            xmlZahlzuordnen(p,'HG201', station, "X1")
-            xmlZahlzuordnen(p,'HG202', station, "Y1")
-            xmlZahlzuordnen(p,'HG204', station, "Z1")
+            xmlZahlzuordnen(self,p,'HG201', station, "X1")
+            xmlZahlzuordnen(self,p,'HG202', station, "Y1")
+            xmlZahlzuordnen(self,p,'HG204', station, "Z1")
 
-            xmlZahlzuordnen(p,'HG206', station, "X2")
-            xmlZahlzuordnen(p,'HG207', station, "Y2")
-            xmlZahlzuordnen(p,'HG209', station, "Z2")
+            xmlZahlzuordnen(self,p,'HG206', station, "X2")
+            xmlZahlzuordnen(self,p,'HG207', station, "Y2")
+            xmlZahlzuordnen(self,p,'HG209', station, "Z2")
 
-            xmlAbschnitt_XY_lesen(p,station)
+            xmlAbschnitt_XY_lesen(self,p,station)
             x1=station['X1']
             y1=station['Y1']
             x2=station['X2']
@@ -508,7 +568,7 @@ class M150XmlImp (object):
                 stationen = ins.findall('HZ')
                 for stat in stationen:
                     
-                    xmlListezuordnen(stat, Stations_Felder, station)
+                    xmlListezuordnen(self,stat, Stations_Felder, station)
                 
                     station.update(ID=halnr) 
                     station.update(ID2=inspnr)
@@ -542,8 +602,7 @@ class M150XmlImp (object):
 
 
     def _readInspektionenSchacht(self):
-        ns = self._ns
-        
+
 
         schaechte = self._data.findall('KG')
        
@@ -554,19 +613,19 @@ class M150XmlImp (object):
             
 
              # falls keine Einzelpunkte definiert dan aus HG201 u. ff.
-            xmlZahlzuordnen(p,'KG201', inspektionSchacht, "X1")
-            xmlZahlzuordnen(p,'KG202', inspektionSchacht, "Y1")
-            xmlZahlzuordnen(p,'KG204', inspektionSchacht, "Z1")
+            xmlZahlzuordnen(self,p,'KG201', inspektionSchacht, "X1")
+            xmlZahlzuordnen(self,p,'KG202', inspektionSchacht, "Y1")
+            xmlZahlzuordnen(self,p,'KG204', inspektionSchacht, "Z1")
 
-            xmlZahlzuordnen(p,'KG206', inspektionSchacht, "X2")
-            xmlZahlzuordnen(p,'KG207', inspektionSchacht, "Y2")
-            xmlZahlzuordnen(p,'KG209', inspektionSchacht, "Z2")
+            xmlZahlzuordnen(self,p,'KG206', inspektionSchacht, "X2")
+            xmlZahlzuordnen(self,p,'KG207', inspektionSchacht, "Y2")
+            xmlZahlzuordnen(self,p,'KG209', inspektionSchacht, "Z2")
             
-            xmlAbschnitt_XY_lesen(p,inspektionSchacht)
+            xmlAbschnitt_XY_lesen(self,p,inspektionSchacht)
 
             inspektionenSchacht = p.findall('KI')
             for ins in inspektionenSchacht:
-                xmlListezuordnen(ins, Inspektions_FelderSchacht, inspektionSchacht)
+                xmlListezuordnen(self,ins, Inspektions_FelderSchacht, inspektionSchacht)
                 inspektionSchacht.update(ID=schachtnr) 
 
                         
@@ -588,15 +647,15 @@ class M150XmlImp (object):
             
 
              # falls keine Einzelpunkte definiert dan aus HG201 u. ff.
-            xmlZahlzuordnen(p,'KG201', stationSchacht, "X1")
-            xmlZahlzuordnen(p,'KG202', stationSchacht, "Y1")
-            xmlZahlzuordnen(p,'KG204', stationSchacht, "Z1")
+            xmlZahlzuordnen(self,p,'KG201', stationSchacht, "X1")
+            xmlZahlzuordnen(self,p,'KG202', stationSchacht, "Y1")
+            xmlZahlzuordnen(self,p,'KG204', stationSchacht, "Z1")
 
-            xmlZahlzuordnen(p,'KG206', stationSchacht, "X2")
-            xmlZahlzuordnen(p,'KG207', stationSchacht, "Y2")
-            xmlZahlzuordnen(p,'KG209', stationSchacht, "Z2")
+            xmlZahlzuordnen(self,p,'KG206', stationSchacht, "X2")
+            xmlZahlzuordnen(self,p,'KG207', stationSchacht, "Y2")
+            xmlZahlzuordnen(self,p,'KG209', stationSchacht, "Z2")
             
-            xmlAbschnitt_XY_lesen(p,stationSchacht)
+            xmlAbschnitt_XY_lesen(self,p,stationSchacht)
 
             x1=stationSchacht['X1']
             y1=stationSchacht['Y1']
@@ -618,7 +677,7 @@ class M150XmlImp (object):
                 stationenSchacht = ins.findall('KZ')
                 for stat in stationenSchacht:
 
-                    xmlListezuordnen(stat, Stations_FelderSchacht, stationSchacht)
+                    xmlListezuordnen(self,stat, Stations_FelderSchacht, stationSchacht)
                 
                     stationSchacht.update(ID=schachtnr) 
                     stationSchacht.update(ID2=inspnr)
@@ -650,8 +709,7 @@ class M150XmlImp (object):
                     self._stationen.append(stationSchacht)        
 
     def _readReferenzen(self):
-        ns = self._ns
-        
+
         
         referenzen = self._data.findall('RT')
        
@@ -659,7 +717,7 @@ class M150XmlImp (object):
         
         for ref in referenzen:
             
-            xmlListezuordnen(ref, Referenz_Felder, referenz)
+            xmlListezuordnen(self,ref, Referenz_Felder, referenz)
             referenz.update(referenz=referenztabZuordnen(referenz['referenztab'])) 
             if referenz['bezeichnung'] =='':
                    referenz.update(bezeichnung=referenz['langtext']) 

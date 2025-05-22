@@ -5,21 +5,18 @@ Import Lines and Points (Wastewater Manholes and sewers ) from DWA XML M150  and
  </p>
  <p>
  <br>
+    - alle vorhandenen Attribute werden ohne Pruefung in die entsprechenden Felder eingelesen<br>
+    - Formatfestlegungen der Attribute werden beruecksichtigt und Referenzlisten werden übernommen, <br>
+    - und koennen durch Verknuepfung mit Werteverweis auf die Referenzliste beruecksichtigt werden<br>
+    - Knickpunkte in Leitungen oder Haltungen werden derzeit noch nicht beruecksichtigt. <br>
+    - Es findet keinerlei Plausibilitaetspruefung statt.<br> 
+    - Haltungen aus Polylinien können in QGIS mit dem Feldrechner aus dem Attribut "Geometrie" übernommen werden  <br> 
+      geometry = geom_from_wkt('LINESTRINGZ('||"Geometrie"||')')<br> 
 
-  - alle vorhandenen Attribute werden ohne Pruefung in die entsprechenden Felder eingelesen<br>
-- Formatfestlegungen der Attribute werden beruecksichtigt und Referenzlisten werden übernommen<br>
-- und koennen durch Verknuepfung mit Werteverweis auf die Referenzliste beruecksichtigt werden<br>
-- Knickpunkte in Leitungen oder Haltungen werden beruecksichtigt.<br>
-- Es findet keinerlei Plausibilitaetspruefung statt.<br>
-- Schächte mit Umrissen können in QGIS in der Symboldefinition und dem Geometriegenerator über das Attribut "Geometrie" übernommen werden<br>
-  Beim Geometriegenrator einfach die Funktion "geom_from_wkt('LINESTRINGZ('||"Geometrie"||')')"<br>
-
+      
     Ueber Rueckmeldungen werde ich mich sehr freuen.<br> 
     Viel Erfolg Gerd Dreier<br><br><br><br>
-
-
-Ueber Rueckmeldungen werde ich mich sehr freuen.
-
-Viel Erfolg Gerd Dreier
-
-
+    If this plugin is useful for you, please consider to make a donation of any value to the Maintainer</p>
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L6CGBSXGQNCLS&source=url" target="_blank">
+    <img border="0" alt="Donate" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif">
+    </a> 

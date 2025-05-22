@@ -6,7 +6,7 @@
 name=DWA_M150_XML_Import
 qgisMinimumVersion=3.20
 description=Import Lines and Points (Manholes and sewers) from  DWA M150 XML and now ISYBAU XML >2006
-version=2.4
+version=2.5
 author=g3er geoplaning GmbH
 email=kontakt@geoplaning.de
 
@@ -40,7 +40,7 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=DWA, analysis, import, XML, M150, Haltung, Schacht, Zustand, ISYBAU
+tags=DWA, analysis, import, XML, M150, Haltung, Schacht, Zustand, ISYBAU, Kanalkataster, Qgis, TV Untersuchung, Stammdaten, Inspektionsdaten 
 
 homepage=https://github.com/Amphibitus/m150xml
 
