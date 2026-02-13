@@ -1,3 +1,10 @@
+<p align="center">
+  <img width="50" height="50" src="icon.png" alt="dsf_logo">
+
+  <h2 align="center">DWA XML M150 und ISYBAU XML Import</h2>
+</p>
+
+
 Import Lines and Points (Wastewater Manholes and sewers ) from DWA XML M150  and ISYBAU XML 
  <p>
  Ziel des Plugins ist die Uebernahme von Daten aus den einheitlichen Datenschnittstelle <br>
@@ -11,12 +18,15 @@ Import Lines and Points (Wastewater Manholes and sewers ) from DWA XML M150  and
     - Knickpunkte in Leitungen oder Haltungen werden derzeit noch nicht beruecksichtigt. <br>
     - Es findet keinerlei Plausibilitaetspruefung statt.<br> 
     - Haltungen aus Polylinien können in QGIS mit dem Feldrechner aus dem Attribut "Geometrie" übernommen werden  <br> 
-      geometry = geom_from_wkt('LINESTRINGZ('||"Geometrie"||')')<br> 
+      geometry = geom_from_wkt('LINESTRINGZ('||"Geometrie"||')')
 
-      
-    Ueber Rueckmeldungen werde ich mich sehr freuen.<br> 
-    Viel Erfolg Gerd Dreier<br><br><br><br>
-    If this plugin is useful for you, please consider to make a donation of any value to the Maintainer</p>
-    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L6CGBSXGQNCLS&source=url" target="_blank">
-    <img border="0" alt="Donate" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif">
-    </a> 
+
+Ueber Rueckmeldungen werde ich mich sehr freuen.<br> 
+Viel Erfolg Gerd Dreier<br><br><br><br>
+    
+If this plugin is useful for you, please consider to make a donation of any value to the Maintainer
+
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L6CGBSXGQNCLS&source=url" target="_blank">
+<img border="0" alt="Donate" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif">
+</a> 
+
