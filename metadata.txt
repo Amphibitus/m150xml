@@ -4,9 +4,10 @@
 
 [general]
 name=DWA_M150_XML_Import
-qgisMinimumVersion=3.20
+qgisMinimumVersion=3.22
+qgisMaximumVersion=4.99
 description=Import Lines and Points (Manholes and sewers) from  DWA M150 XML and now ISYBAU XML >2006
-version=2.5
+version=2.55
 author=g3er geoplaning GmbH
 email=kontakt@geoplaning.de
 

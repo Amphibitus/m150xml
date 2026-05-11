@@ -8,7 +8,7 @@
                               -------------------
         begin                : 2019-12-18
         git sha              : $Format:%H$
-        copyright            : (C) 2019 by gerd 3er geoplaning GmbH
+        copyright            : (C) 2025 by gerd 3er geoplaning GmbH
         email                : kontakt@geoplaning.de
 
  ***************************************************************************/
@@ -22,28 +22,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QMessageBox
-from qgis.PyQt.QtCore import  QRegExp, Qt
-
 from qgis.core import *
 
 
-# Initialize Qt resources from file resources.py
+# Lokale Ressourcen und Dialoge
 from .resources import *
-# Import the code for the dialog
 from .m150xml_dialog import m150xmlDialog
-import os.path
-
-import string
-import math
-import sys
-
-from shapely.geometry import MultiPolygon,MultiLineString
 from .m150xmlimp import *
 from .m150xmlimpdata import *
-
+import os.path
 class m150xml:
     """QGIS Plugin Implementation."""
 
@@ -211,7 +201,7 @@ class m150xml:
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        result = self.dlg.exec()
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and
@@ -225,7 +215,7 @@ class m150xml:
 
 
     def _accept(self):
-        filename = unicode(self.dlg.uXmlFile.text())
+        filename =  self.dlg.uXmlFile.text()
         homedir = os.path.dirname(filename)
         settings = QSettings()
         settings.setValue('/plugins/M150XML/BrowsePath',homedir)
@@ -239,7 +229,7 @@ class m150xml:
             return
 
         #try:
-        if QRegExp('\.xml$', Qt.CaseInsensitive).indexIn(filename)>-1:
+        if filename.lower().endswith('.xml'):
             self.dlg.uXmlFile.setText(filename)
 
             data = M150XmlImp(filename)
@@ -262,6 +252,7 @@ class m150xml:
 
 
     def _createSchachtLayer(self,data):
+
         name = "Schacht_M150"
         #uri="Point?"+"&".join(['field='+x for x in Schacht_Felder])
         uri ="PointZ?encoding=utf-8&field=oid:integer&"
@@ -301,21 +292,28 @@ class m150xml:
                     content = schacht[data._Schacht_Felder[i+1]]
                     feat.setAttribute(str(data._Schacht_Felder[i+1]).replace(' ','_'),content)
 
-            # Koordinaten hinzufuegen'
-            x=schacht['X1']
-            y=schacht['Y1']
-            z=schacht['Z1']
-            pt_z= QgsPoint(x,y,z).asWkt()
-            feat.setGeometry(QgsGeometry.fromWkt(pt_z))
-            feat.setAttribute("Geometrie",schacht["Geometrie"])
+
             
+
             
+            #  guard: fehlende Koordinaten
+            if schacht['X1'] is None or schacht['Y1'] is None:
+                QgsMessageLog.logMessage("Coordinates were not determined:"+str(lfdnr), 'M150xml', Qgis.Info)
+            else:
+                # Koordinaten hinzufuegen'
+                x=schacht['X1']
+                y=schacht['Y1']
+                z=schacht['Z1']
+                pt_z= QgsPoint(x,y,z).asWkt()
+                feat.setGeometry(QgsGeometry.fromWkt(pt_z))
+                
+            feat.setAttribute("Geometrie",schacht["Geometrie"])                
 
             #try:
             pr.addFeatures([feat])
             #except:
             #    raise
-            #    gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+            #    QgsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
 
 
 
@@ -334,6 +332,9 @@ class m150xml:
             g.insertChildNode(0, QgsLayerTreeLayer(vl))
 
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
+            #if self._version=='ISYBAU':
+            #    sldfilename = os.path.normpath(locale_path +'\\Schacht_ISYBAU.qml')
+            #else:
             sldfilename = os.path.normpath(locale_path +'\\Schacht_M150.qml')
 
             if os.path.exists(sldfilename):
@@ -351,6 +352,7 @@ class m150xml:
 
 
     def _createHaltungsLayer(self,data):
+
         name = "Haltung_M150"
         
         uri ="LineStringZ?encoding=utf-8&field=oid:integer&"
@@ -428,6 +430,9 @@ class m150xml:
 
 
             locale_path = os.path.join(os.path.dirname(__file__),'BrowsePath')
+            #if self._version=='ISYBAU':
+            #    sldfilename = os.path.normpath(locale_path +'\\Haltung_ISYBAU.qml')
+            #else:
             sldfilename = os.path.normpath(locale_path +'\\Haltung_M150.qml')
 
             if os.path.exists(sldfilename):
@@ -480,19 +485,22 @@ class m150xml:
 
                     content = inspektion[Inspektions_Felder[i+1]]
                     feat.setAttribute(str(Inspektions_Felder[i+1]).replace(' ','_'),content)
+            
+            #  guard: fehlende Koordinaten
+            if inspektion['X1'] is None or inspektion['X2'] is None or inspektion['Y1'] is None or inspektion['Y2'] is None:
+                QgsMessageLog.logMessage("Coordinates were not determined:"+str(lfdnr), 'M150xml', Qgis.Info)
+            else:
+                # Koordinaten hinzufuegen'
+                x=(inspektion['X1']+inspektion['X2'])/2
+                y=(inspektion['Y1']+inspektion['Y2'])/2
+                feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
 
 
-            # Koordinaten hinzufuegen'
-            x=(inspektion['X1']+inspektion['X2'])/2
-            y=(inspektion['Y1']+inspektion['Y2'])/2
-            
-            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
-            
             try:
                 pr.addFeatures([feat])
             except:
                 raise
-                gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+                QgsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
 
 
         if lfdnr>0:
@@ -565,17 +573,21 @@ class m150xml:
                     feat.setAttribute(str(Stations_Felder[i+1]).replace(' ','_'),content)
 
 
+
+            #  guard: fehlende Koordinaten
+            if station['X1'] is None or station['Y1'] is None:
+                QgsMessageLog.logMessage("Coordinates were not determined:"+str(lfdnr), 'M150xml', Qgis.Info)
+            else:
             # Koordinaten hinzufuegen'
-            x=station['X1']
-            y=station['Y1']
-            
-            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
+                x=station['X1']
+                y=station['Y1']                
+                feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
             
             try:
                 pr.addFeatures([feat])
             except:
                 raise
-                gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+                QgsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
 
 
 
@@ -649,17 +661,22 @@ class m150xml:
                     feat.setAttribute(str(Inspektions_FelderSchacht[i+1]).replace(' ','_'),content)
 
 
-            # Koordinaten hinzufuegen'
-            x=inspektionSchacht['X1']
-            y=inspektionSchacht['Y1']
-            
-            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
+
+
+            #  guard: fehlende Koordinaten
+            if inspektionSchacht['X1'] is None or inspektionSchacht['Y1'] is None:
+                QgsMessageLog.logMessage("Coordinates were not determined:"+str(lfdnr), 'M150xml', Qgis.Info)
+            else:
+                # Koordinaten hinzufuegen'
+                x=inspektionSchacht['X1']
+                y=inspektionSchacht['Y1']
+                feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
             
             try:
                 pr.addFeatures([feat])
             except:
                 raise
-                gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+                QgsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
 
 
         if lfdnr>0:
@@ -733,18 +750,21 @@ class m150xml:
                     feat.setAttribute(str(Stations_FelderSchacht[i+1]).replace(' ','_'),content)
 
 
-            # Koordinaten hinzufuegen'
-            x=stationSchacht['X1']
-            y=stationSchacht['Y1']
-            
-            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
+            #  guard: fehlende Koordinaten
+            if stationSchacht['X1'] is None or stationSchacht['Y1'] is None:
+                QgsMessageLog.logMessage("Coordinates were not determined:"+str(lfdnr), 'M150xml', Qgis.Info)
+            else:
+                # Koordinaten hinzufuegen'
+                x=stationSchacht['X1']
+                y=stationSchacht['Y1']
+                feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x,y)))
             
 
             try:
                 pr.addFeatures([feat])
             except:
                 raise
-                gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+                QgsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
 
         if lfdnr>0:
             vl.updateExtents()
@@ -820,7 +840,7 @@ class m150xml:
                 pr.addFeatures([feat])
             except:
                 raise
-                gsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
+                QgsMessageLog.logMessage("Attribute NOT loaded:"+str(lfdnr), 'M150xml', Qgis.Info)
 
 
 
